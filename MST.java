@@ -1,4 +1,6 @@
 import java.util.*;
+import java.io.FileWriter;
+import java.io.IOException;
 
 public class MST {
 
@@ -26,7 +28,6 @@ public class MST {
 	private void reinitRecords() {
 
         // Clear out MST records for new trial
-        // TODO: move this into a new reset() function
         for (int i = 0; i < this.numpoints; i++) {
             this.dist[i] = INF;
             this.inTree[i] = false;
@@ -44,19 +45,17 @@ public class MST {
 	}
 
     private double calculateWeight(int v, int w) {
-        // TODO: change this code
-
         // For 0-Dimension, weight is uniform r.v. from [0,1]
         if (this.dimension == 0) {
             return this.rand.nextDouble();
         }
 
-        double res = 0;
         // Weight is Euclidean norm between nodes
+        double weight = 0;
         for (int d = 0; d < this.dimension; d++) {
-            res += Math.pow(locations[v][d] - locations[w][d], 2);
+            weight += Math.pow(locations[v][d] - locations[w][d], 2);
         }
-        return Math.sqrt(res);
+        return Math.sqrt(weight);
     }
 
     // TODO: pass in numpoints, dimension, and numtrials instead of having them be object attributes
@@ -109,15 +108,41 @@ public class MST {
     }
 
 
-	// TODO: rework main such that we have all the simulations done in one go
 	public static void main(String[] args) {
-        int points = Integer.parseInt(args[0]);
-        int trials = Integer.parseInt(args[1]);
-        int dimension = Integer.parseInt(args[2]);
+//        int points = Integer.parseInt(args[0]);
+//        int trials = Integer.parseInt(args[1]);
+//        int dimension = Integer.parseInt(args[2]);
 
-        MST mst = new MST(points, trials, dimension);
-		double averageSize = mst.simulateTrials();
-		// TODO: switch out double for float
-		System.out.printf("Average MST weight for dim: (%d) and points (%d) is (%f)\n", dimension, points, averageSize);
+        int trials = 5;
+        int[] testPoints = new int[]{128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144};
+//        int[] testDimensions = new int[]{0, 2, 3, 4};
+        int[] testDimensions = new int[]{2, 3, 4};
+
+        for (int dim: testDimensions) {
+            for (int points: testPoints) {
+
+                long startTime = System.currentTimeMillis();
+                MST mst = new MST(points, trials, dim);
+                double averageSize = mst.simulateTrials();
+                double elapsedTime = (double) (System.currentTimeMillis() - startTime) / 1000;
+
+                String simulationRecord = String.format(
+                        "Average MST weight for dim: (%d) and points (%d) is (%f) and took (%.3f) seconds\n",
+                        dim, points, averageSize, elapsedTime
+                );
+
+                try {
+                    // Append results to log file
+                    FileWriter writer = new FileWriter("mstlog.txt", true);
+                    writer.write(simulationRecord);
+                    writer.close();
+                } catch (IOException e) {
+                    System.out.println("An error occurred.");
+                    e.printStackTrace();
+                }
+
+                System.out.printf(simulationRecord);
+            }
+        }
 	}
 }
